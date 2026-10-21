@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset=utf-8 />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="./static/css/main.css">
+    <title>Petal</title>
+    <script src="./static/jquery.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./static/socket.io/client-dist/socket.io.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./static/crypto-js.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./static/encrypt.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<style>
+    *{
+        margin: 0;
+        padding: 0;
+    }
+    body{
+        width:100vw;
+        height: 100vh;
+        overflow: hidden;
+    }
+    .mask{
+        position: fixed;
+        z-index: 9999;
+        width: 90vw;
+        height: 90vh;
+        transform: translate(-50%,-50%);
+        top: 50%;
+        left: 50%;
+        background-color: rgba(0,0,0,.6);
+        padding: 20px 10vw;
+        box-sizing: border-box;
+        /*display: none;*/
+    }
+    .mask .h1{
+        margin-bottom: 20px;
+        display: flex;
+        font-size: 30px;
+        height: 40px;
+        line-height: 40px;
+    }
+    .mask .h2{
+        margin-bottom: 20px;
+        display: flex;
+        font-size: 25px;
+        height: 40px;
+        line-height: 40px;
+    }
+    .mask .h1>div{
+        width: 50%;
+        height: 40px;
+        line-height: 40px;
+    }
+    .mask .h1>.new{
+        font-weight: 800;
+        text-align: right;
+        cursor: pointer;
+    }
+    .mask li{
+        cursor: pointer;
+        list-style: none;
+        width: 70vw;
+        height: 50px;
+        padding: 0 15px;
+        font-size: 20px;
+        border-radius: 5px;
+        line-height: 50px;
+        box-sizing: border-box;
+        background-color: blue;
+        display: flex;
+        margin-bottom: 10px;
+        background-image: linear-gradient(135deg,#8BC6EC,#9599E2);
+    }
+    .mask li>div{
+        width: 50%;
+        height: 100%;color: #333;
+    }
+    .mask li>div:nth-child(2){
+        text-align: right;
+        color: #fff;
+    }
+    .shapes,.colors{
+        display: flex;
+    }
+    .shape,.color{
+        width: 22%;
+        height: 100%;
+        font-size: 20px;
+        cursor: pointer;
+    }
+    .active{
+        color: red;
+    }
+    .users{
+        position: fixed;
+        top: 0;
+        right: 0;
+        font-size: 16px;
+        text-align: right;
+        background-color: rgba(0,0,0,.3);
+        display: none;
+    }
+    .blue{
+        color: blue;
+        font-size: 20px;
+        font-weight: 900;
+    }
+    .green{
+        color: green;
+        font-size: 20px;
+        font-weight: 900;
+    }
+    .red{
+        color: red;
+        font-size: 20px;
+        font-weight: 900;
+    }
+    .black{
+        color: #eee;
+        font-size: 20px;
+        font-weight: 900;
+    }
+    .chat{
+        max-height: 50vh;
+        overflow: hidden;
+        min-height:10vh;
+        min-width: 10vw;
+        position: fixed;
+        left: 10px;
+        bottom: 30px;
+        display: none;
+        transform: translate(0,0);
+    }
+    .chat-input{
+        position: fixed;
+        left: 10px;
+        bottom: 10px;
+        background-color: transparent;
+        border: 0px;
+        /*color:white;*/
+    }
+    .chat-input:focus{
+        outline: none;
+    }
+</style>
+<body>
+<div id="info">
+    chatofpetal
+</div>
+<div id="container"></div>
+<div class="mask">
+    <div class="list">
+        <div class="h1">
+            <div class="title">Choose a room</div>
+            <div class="new add">new ></div>
+        </div>
+        <ul class="rooms">
+<!--            <li onclick="chooseRoom(this,1)">-->
+<!--                <div>1</div>-->
+<!--                <div>2/1</div>-->
+<!--            </li>-->
+<!--            <li onclick="chooseRoom(this,2)">-->
+<!--                <div>2</div>-->
+<!--                <div>2/1</div>-->
+<!--            </li>-->
+        </ul>
+    </div>
+    <div class="shapeandcolor" style="display: none">
+        <div class="h1">
+            <div class="title">Choose your shape and color</div>
+            <div class="new" onclick="backList()">< back</div>
+        </div>
+        <div class="h2">Shapes </div>
+        <div class="shapes">
+            <div class="shape active" onclick="setActiveShape(this,0)">Box</div>
+            <div class="shape" onclick="setActiveShape(this,1)">Extrude</div>
+            <div class="shape" onclick="setActiveShape(this,2)">Octahedron</div>
+            <div class="shape" onclick="setActiveShape(this,3)">Torus</div>
+        </div>
+        <div class="h2">Colors </div>
+        <div class="colors">
+            <div class="color active" onclick="setActive(this,0)" data-id="0">Blue</div>
+            <div class="color" onclick="setActive(this,1)" data-id="1">Green</div>
+            <div class="color" onclick="setActive(this,2)" data-id="2">Red</div>
+            <div class="color" onclick="setActive(this,3)" data-id="3">Black</div>
+        </div>
+        <div class="h2" onclick="enterroom()" style="margin-top: 20px;font-weight: 800;cursor: pointer">OK </div>
+    </div>
+</div>
+<div class="users">
+    <span class="blue">·</span>petal1
+</div>
+<div class="chat" >
+    <div class="content">
+
+    </div>
+
+</div>
+<input type="text" class="chat-input">
+<input id="aes_key" type="hidden" value="<%= aes_key %>">
+<input id="userinfo" type="hidden" value="<%= userinfo %>">
+<!-- Import maps polyfill -->
+<!-- Remove this when import maps will be widely supported -->
+<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+<script type="importmap">
+			{
+				"imports": {
+					"three": "./static/three.module.js"
+				}
+			}
+		</script>
+<script>
+    let udptoken;
+    function connect(){
+        window.socket = io("/",{
+            query:{
+                "username":userinfo.username,
+                "uuid":userinfo.uuid
+            }
+        });
+    }
+    window.userinfo=JSON.parse($("#userinfo").val());
+    window.inputing = false;
+    window.roomList = {};
+    window.shape = 0;
+    window.color = 0;
+    window.roomid = null;
+    window.onload = function () {
+        window.AESKEY=$("#aes_key").val();
+
+        console.log($("#aes_key").val())
+        connect();
+        window.socket.on("newudptoken",function (res) {
+            udptoken = res;
+        });
+        socket.emit("login",userinfo.username,userinfo.uuid);
+        window.socket.on("logininfo",function (res,roomList) {
+            if(res != 'success') return window.location.href = '/';
+            window.roomList = roomList;
+            loadRooms()
+        });
+        window.socket.on("refresh",function (res,ball) {
+            if(enemyPool[res.username]) enemyPool[res.username].position.set(res.posx,res.posy,res.posz);
+            let idx = 0;
+        });
+        window.socket.on("roominfo",function(res,room){
+            window.roominfo = res;
+            window.roomid = room;
+            console.log(res)
+            for (let i of res) {
+                if(i[0] != userinfo.username && !(window.enemyPool.hasOwnProperty(i[0]))) addEnemy(i[0],i[1],i[2]);
+            }
+            updateUserList();
+        });
+        window.socket.on("useroff",function(res){
+            for (let i in enemyPool) {
+                if(i != userinfo.username) {
+                    window.scene.remove(enemyPool[res]);
+                    delete enemyPool[res];
+                };
+            }
+            let arr = [];
+            for(let i in window.roominfo){
+                if(window.roominfo[i][0] == res) continue;
+                arr.push(window.roominfo[i]);
+            }
+            window.roominfo = arr;
+            updateUserList();
+        });
+        window.socket.on("chatcontent",function (res) {
+            let color = {0:"blue",1:"green",2:"red",3:"black"};
+            $(".content")[0].innerHTML+=`<b class="${color[res.color]}">${res.username}</b>: ${res.con}<br>`;
+            let scrollTarget = $('.chat');
+            scrollTarget[0].scrollTop = scrollTarget[0].scrollHeight;
+        })
+        window.socket.on("userthrow",function (un,playerDir,playerColl) {
+            window.throwBall(un,new window.THREE.Vector3(playerDir.x,playerDir.y,playerDir.z),new window.Capsule(new window.THREE.Vector3(playerColl.start.x,playerColl.start.y,playerColl.start.z),new window.THREE.Vector3(playerColl.end.x,playerColl.end.y,playerColl.end.z),playerColl.radius))
+        })
+        document.addEventListener( 'keydown', ( event ) => {
+            if(ifRotate) return;
+            if(event.code == 'Enter'){
+                console.log(1)
+                if(document.activeElement == $(".chat-input")[0]){
+                    $(".chat-input").blur()
+                    $(".chat-input").hide()
+                    if($(".chat-input").val() != ''){
+                        window.socket.emit("roomchat",{username:userinfo.username,room:window.roomid,color:window.color,con:$(".chat-input").val()});
+                        $(".chat-input").val('');
+                    }
+                    window.inputing = false;
+                }else{
+                    $(".chat-input").show()
+                    $(".chat-input").focus()
+                    window.inputing = true;
+                }
+            }
+        } );
+        $(".add").on("click",function () {
+            $(".list").hide()
+            $(".shapeandcolor").show()
+
+        })
+    }
+    function enterroom(){
+        let shape = window.shape;
+        let color = window.color;
+        socket.emit("enterroom",window.roomid,shape,color);
+        $(".mask").hide();
+        $(".chat").show();
+        window.ifRotate = false;
+    }
+    function loadRooms(){
+        let rooms = document.getElementsByClassName("rooms")[0];
+        //if(Object.keys(roomList).length === 0) return rooms.innerHTML = "No room now,you can create one";
+        for(let i in roomList){
+            let li = `<li onclick="chooseRoom(this,${i},${Object.keys(roomList[i]).length})">
+            <div>${i}</div>
+            <div>${Object.keys(roomList[i]).length}/4</div>
+        </li>`;
+            rooms.innerHTML+=li;
+        }
+    }
+    function chooseRoom(ele,id,num) {
+        if(num >= 4) return alert("This room is full,please choose another");
+        window.roomid = id;
+        document.getElementsByClassName('list')[0].style.display = 'none';
+        document.getElementsByClassName('shapeandcolor')[0].style.display = 'block';
+        let color = {0:"Blue",1:"Green",2:"Red",3:"Black"};
+
+        window.shape = 0;
+        for(let i in roomList[id]){
+            if(color.hasOwnProperty(roomList[id][i]['color'])) delete color[roomList[id][i]['color']];
+        }
+        let colorStr = '';
+        for(let i in color){
+            colorStr+=`<div class="color" onclick="setActive(this,${i})" data-id="${i}">${color[i]}</div>`;
+        }
+        $(".colors").html(colorStr);
+        $(".color")[0].className += " active"
+        window.color = Number($($(".color")[0]).attr("data-id"));
+    }
+    function backList(){
+        document.getElementsByClassName('list')[0].style.display = 'block';
+        document.getElementsByClassName('shapeandcolor')[0].style.display = 'none';
+    }
+    function setActive(ele,idx) {
+        window.color = idx;
+        $(".color").each(function (idx,i) {
+            i.className = "color"
+        })
+        ele.className+=" active";
+    }
+    function setActiveShape(ele,idx) {
+        window.shape = idx;
+        $(".shape").each(function (idx,i) {
+            i.className = "shape"
+        })
+        ele.className+=" active";
+    }
+    function updateUserList(){
+        let str = '';
+        let color = {0:"blue",1:"green",2:"red",3:"black"};
+        if(window.roominfo.length){
+            for (let i of window.roominfo) {
+                if(i) str+=`<span class="${color[i[2]]}">·</span>${i[0]}<br>`;
+            }
+        }
+        $(".users").show()
+        if(str != ''){
+            $(".users").html(str);
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    import Stats from './static/jsm/libs/stats.module.js';
+
+    import { GLTFLoader } from './static/jsm/loaders/GLTFLoader.js';
+
+    import { Octree } from './static/jsm/math/Octree.js';
+    import { OctreeHelper } from './static/jsm/helpers/OctreeHelper.js';
+
+    import { Capsule } from './static/jsm/math/Capsule.js';
+
+    window.THREE = THREE;
+    window.Capsule = Capsule;
+    const clock = new THREE.Clock();
+
+    const scene = new THREE.Scene();
+    window.scene = scene;
+    //0x88ccee
+    scene.background = new THREE.Color( 0x88ccee );
+    // scene.fog = new THREE.Fog( 0x88ccee, 0, 50 );
+    window.enemyPool = {};
+
+    const camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 1000 );
+    camera.rotation.order = 'YXZ';
+    console.log(camera)
+    window.camera = camera;
+
+    const fillLight1 = new THREE.HemisphereLight( 0x4488bb, 0x002244, 0.5 );
+    fillLight1.position.set( 2, 1, 1 );
+    scene.add( fillLight1 );
+
+    const directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+    directionalLight.position.set( - 5, 25, - 1 );
+    directionalLight.castShadow = true;
+    directionalLight.shadow.camera.near = 0.01;
+    directionalLight.shadow.camera.far = 500;
+    directionalLight.shadow.camera.right = 30;
+    directionalLight.shadow.camera.left = - 30;
+    directionalLight.shadow.camera.top	= 35;
+    directionalLight.shadow.camera.bottom = - 30;
+    directionalLight.shadow.mapSize.width = 1024;
+    directionalLight.shadow.mapSize.height = 1024;
+    directionalLight.shadow.radius = 4;
+    directionalLight.shadow.bias = - 0.00006;
+    scene.add( directionalLight );
+
+    const container = document.getElementById( 'container' );
+
+    const renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.VSMShadowMap;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    container.appendChild( renderer.domElement );
+
+    const stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.top = '0px';
+    container.appendChild( stats.domElement );
+
+    const GRAVITY = 30;
+
+    const NUM_SPHERES = 1;
+    const SPHERE_RADIUS = 0.2;
+
+    const STEPS_PER_FRAME = 5;
+
+    const sphereGeometry = new THREE.IcosahedronGeometry( SPHERE_RADIUS, 5 );
+
+
+    const spheres = [];
+    window.spheres = spheres;
+    let sphereIdx = 0;
+
+    window.addSphere = function (color=0xbbbb44,username=userinfo.username) {
+        const sphereMaterial = new THREE.MeshLambertMaterial( { color: 0xbbbb44 } );
+        const sphere = new THREE.Mesh( sphereGeometry, sphereMaterial );
+        sphere.castShadow = true;
+        sphere.receiveShadow = true;
+        scene.add( sphere );
+        spheres.push( {
+            username:username,
+            mesh: sphere,
+            collider: new THREE.Sphere( new THREE.Vector3( 0, - 100, 0 ), SPHERE_RADIUS ),
+            velocity: new THREE.Vector3()
+        } );
+    }
+
+    for ( let i = 0; i < NUM_SPHERES; i ++ ) {
+
+        addSphere();
+    }
+
+
+    const worldOctree = new Octree();
+
+    const playerCollider = new Capsule( new THREE.Vector3( 0, 0.35, 0 ), new THREE.Vector3( 0, 1, 0 ), 0.35 );
+    console.log(playerCollider)
+
+    const playerVelocity = new THREE.Vector3();
+    const playerDirection = new THREE.Vector3();
+
+    let playerOnFloor = false;
+    let mouseTime = 0;
+
+    const keyStates = {};
+
+    const vector1 = new THREE.Vector3();
+    const vector2 = new THREE.Vector3();
+    const vector3 = new THREE.Vector3();
+
+
+
+
+    camera.position.y = 35;
+
+    camera.position.z = 3;
+    camera.lookAt(0,-1,3);
+
+    document.addEventListener( 'keydown', ( event ) => {
+
+        keyStates[ event.code ] = true;
+
+    } );
+
+    document.addEventListener( 'keyup', ( event ) => {
+
+        keyStates[ event.code ] = false;
+
+    } );
+
+    container.addEventListener( 'mousedown', () => {
+
+        if(window.ifRotate) return;
+        document.body.requestPointerLock();
+
+        mouseTime = performance.now();
+
+    } );
+
+    document.addEventListener( 'mouseup', () => {
+        if(window.inputing) return;
+        if ( document.pointerLockElement !== null ) throwBall();
+
+    } );
+
+    document.body.addEventListener( 'mousemove', ( event ) => {
+        if(window.inputing) return;
+        if ( document.pointerLockElement === document.body ) {
+
+            camera.rotation.y -= event.movementX / 500;
+            camera.rotation.x -= event.movementY / 500;
+
+        }
+
+    } );
+
+    window.addEventListener( 'resize', onWindowResize );
+
+    function onWindowResize() {
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+    }
+
+    function throwBall(username = userinfo.username,playerDir,playerColl=playerCollider) {
+
+        let sphere = spheres[ sphereIdx ];
+        for(let i of spheres){
+            if(i.username == username) sphere = i;
+        }
+
+        camera.getWorldDirection( playerDirection );
+        if(playerDir == undefined) playerDir = playerDirection;
+        //console.log(playerColl)
+        if(username == userinfo.username) window.socket.emit("throwball",username,playerDir,playerColl);
+
+        sphere.collider.center.copy( playerColl.end ).addScaledVector( playerDir, playerColl.radius * 1.5 );
+
+        // throw the ball with more force if we hold the button longer, and if we move forward
+
+        const impulse = 15 + 30 * ( 1 - Math.exp( ( mouseTime - performance.now() ) * 0.001 ) );
+
+        sphere.velocity.copy( playerDir ).multiplyScalar( impulse );
+        sphere.velocity.addScaledVector( playerVelocity, 2 );
+
+        sphereIdx = sphereIdx + 1 ;
+        if(sphereIdx == NUM_SPHERES) sphereIdx=0;
+
+    }
+    window.throwBall = throwBall;
+
+    function playerCollisions() {
+
+        const result = worldOctree.capsuleIntersect( playerCollider );
+
+        playerOnFloor = false;
+
+        if ( result ) {
+
+            playerOnFloor = result.normal.y > 0;
+
+            if ( ! playerOnFloor ) {
+
+                playerVelocity.addScaledVector( result.normal, - result.normal.dot( playerVelocity ) );
+
+            }
+
+            playerCollider.translate( result.normal.multiplyScalar( result.depth ) );
+
+        }
+
+    }
+
+    function updatePlayer( deltaTime ) {
+
+        let damping = Math.exp( - 4 * deltaTime ) - 1;
+
+        if ( ! playerOnFloor ) {
+
+            playerVelocity.y -= GRAVITY * deltaTime;
+
+            // small air resistance
+            damping *= 0.1;
+
+        }
+
+        playerVelocity.addScaledVector( playerVelocity, damping );
+
+        const deltaPosition = playerVelocity.clone().multiplyScalar( deltaTime );
+        playerCollider.translate( deltaPosition );
+
+        playerCollisions();
+
+        camera.position.copy( playerCollider.end );
+
+    }
+
+    function playerSphereCollision( sphere ) {
+
+        const center = vector1.addVectors( playerCollider.start, playerCollider.end ).multiplyScalar( 0.5 );
+
+        const sphere_center = sphere.collider.center;
+
+        const r = playerCollider.radius + sphere.collider.radius;
+        const r2 = r * r;
+
+        // approximation: player = 3 spheres
+
+        for ( const point of [ playerCollider.start, playerCollider.end, center ] ) {
+
+            const d2 = point.distanceToSquared( sphere_center );
+
+            if ( d2 < r2 ) {
+
+                const normal = vector1.subVectors( point, sphere_center ).normalize();
+                const v1 = vector2.copy( normal ).multiplyScalar( normal.dot( playerVelocity ) );
+                const v2 = vector3.copy( normal ).multiplyScalar( normal.dot( sphere.velocity ) );
+
+                playerVelocity.add( v2 ).sub( v1 );
+                sphere.velocity.add( v1 ).sub( v2 );
+
+                const d = ( r - Math.sqrt( d2 ) ) / 2;
+                sphere_center.addScaledVector( normal, - d );
+
+            }
+
+        }
+
+    }
+
+    function spheresCollisions() {
+
+        for ( let i = 0, length = spheres.length; i < length; i ++ ) {
+
+            const s1 = spheres[ i ];
+
+            for ( let j = i + 1; j < length; j ++ ) {
+
+                const s2 = spheres[ j ];
+
+                const d2 = s1.collider.center.distanceToSquared( s2.collider.center );
+                const r = s1.collider.radius + s2.collider.radius;
+                const r2 = r * r;
+
+                if ( d2 < r2 ) {
+
+                    const normal = vector1.subVectors( s1.collider.center, s2.collider.center ).normalize();
+                    const v1 = vector2.copy( normal ).multiplyScalar( normal.dot( s1.velocity ) );
+                    const v2 = vector3.copy( normal ).multiplyScalar( normal.dot( s2.velocity ) );
+
+                    s1.velocity.add( v2 ).sub( v1 );
+                    s2.velocity.add( v1 ).sub( v2 );
+
+                    const d = ( r - Math.sqrt( d2 ) ) / 2;
+
+                    s1.collider.center.addScaledVector( normal, d );
+                    s2.collider.center.addScaledVector( normal, - d );
+
+                }
+
+            }
+
+        }
+
+    }
+
+    function updateSpheres( deltaTime ) {
+
+        spheres.forEach( sphere => {
+
+            sphere.collider.center.addScaledVector( sphere.velocity, deltaTime );
+
+            const result = worldOctree.sphereIntersect( sphere.collider );
+
+            if ( result ) {
+
+                sphere.velocity.addScaledVector( result.normal, - result.normal.dot( sphere.velocity ) * 1.5 );
+                sphere.collider.center.add( result.normal.multiplyScalar( result.depth ) );
+
+            } else {
+
+                sphere.velocity.y -= GRAVITY * deltaTime;
+
+            }
+
+            const damping = Math.exp( - 1.5 * deltaTime ) - 1;
+            sphere.velocity.addScaledVector( sphere.velocity, damping );
+
+            playerSphereCollision( sphere );
+
+        } );
+
+        spheresCollisions();
+
+        for ( const sphere of spheres ) {
+
+            sphere.mesh.position.copy( sphere.collider.center );
+
+        }
+
+    }
+
+    function getForwardVector() {
+
+        camera.getWorldDirection( playerDirection );
+        playerDirection.y = 0;
+        playerDirection.normalize();
+
+        return playerDirection;
+
+    }
+
+    function getSideVector() {
+
+        camera.getWorldDirection( playerDirection );
+        playerDirection.y = 0;
+        playerDirection.normalize();
+        playerDirection.cross( camera.up );
+
+        return playerDirection;
+
+    }
+
+    function controls( deltaTime ) {
+
+        // gives a bit of air control
+        const speedDelta = deltaTime * ( playerOnFloor ? 25 : 8 );
+        if(window.inputing) return;
+        if ( keyStates[ 'KeyW' ] ) {
+
+            playerVelocity.add( getForwardVector().multiplyScalar( speedDelta ) );
+
+        }
+
+        if ( keyStates[ 'KeyS' ] ) {
+
+            playerVelocity.add( getForwardVector().multiplyScalar( - speedDelta ) );
+        }
+
+        if ( keyStates[ 'KeyA' ] ) {
+
+            playerVelocity.add( getSideVector().multiplyScalar( - speedDelta ) );
+
+        }
+
+        if ( keyStates[ 'KeyD' ] ) {
+
+            playerVelocity.add( getSideVector().multiplyScalar( speedDelta ) );
+
+        }
+
+        if ( playerOnFloor ) {
+
+            if ( keyStates[ 'Space' ] ) {
+
+                playerVelocity.y = 15;
+
+            }
+
+        }
+
+    }
+
+    function addEnemy(un,shape=0,color=1){
+        // loader.load( 'Xbot.glb', ( gltf ) => {
+
+        // 	scene.add( gltf.scene );
+        // 	console.log(gltf)
+
+        // });
+        const shapes = [THREE.BoxGeometry,THREE.ExtrudeGeometry,THREE.OctahedronGeometry,THREE.TorusGeometry];
+        const colors = [0x0000FF,0x00ff00,0xff0000,0x444444,0xeeeeee];
+        const geometry = new (shapes[shape])();
+        const material = new THREE.MeshBasicMaterial( { color: colors[color] } );
+        const cube = new THREE.Mesh( geometry, material );
+        cube.position.y=10000;
+        scene.add(cube);
+        enemyPool[un] = cube;
+        window.addSphere(colors[color],un);
+        return cube;
+    }
+    window.addEnemy = addEnemy;
+    // addEnemy();
+
+    const loader = new GLTFLoader().setPath( './static/models/gltf/' );
+
+    loader.load( 'collision-world.glb', ( gltf ) => {
+
+        scene.add( gltf.scene );
+
+        worldOctree.fromGraphNode( gltf.scene );
+
+        gltf.scene.traverse( child => {
+
+            if ( child.isMesh ) {
+
+                child.castShadow = true;
+                child.receiveShadow = true;
+
+                if ( child.material.map ) {
+
+                    child.material.map.anisotropy = 4;
+
+                }
+
+            }
+
+        } );
+
+        const helper = new OctreeHelper( worldOctree );
+        helper.visible = false;
+        scene.add( helper );
+
+        animate();
+
+    } );
+
+    function teleportPlayerIfOob() {
+
+        if ( camera.position.y <= - 25 ) {
+
+            playerCollider.start.set( 0, 0.35, 0 );
+            playerCollider.end.set( 0, 1, 0 );
+            playerCollider.radius = 0.35;
+            camera.position.copy( playerCollider.end );
+            camera.rotation.set( 0, 0, 0 );
+
+        }
+
+    }
+    window.ifRotate = true;
+    window.inRoom = false;
+    window.roomid = null;
+
+    function enterWorld(){
+        if(ifRotate) return;
+        if(camera.position.y < 35) return;
+        window.camera.lookAt(camera.position.x,camera.position.y,camera.position.z)
+    }
+    function animate() {
+        if(ifRotate) camera.rotateZ(0.001);
+        enterWorld();
+        const deltaTime = Math.min( 0.05, clock.getDelta() ) / STEPS_PER_FRAME;
+        // we look for collisions in substeps to mitigate the risk of
+        // an object traversing another too quickly for detection.
+
+        for ( let i = 0; i < STEPS_PER_FRAME; i ++ ) {
+
+            controls( deltaTime );
+
+            if(!ifRotate)updatePlayer( deltaTime );
+
+            updateSpheres( deltaTime );
+
+            teleportPlayerIfOob();
+
+        }
+        if(!window.ifRotate) {
+            if(keyStates[ 'KeyA' ] || keyStates[ 'KeyS' ] || keyStates[ 'KeyD' ] || keyStates[ 'KeyW' ] || keyStates[ 'Space' ] || true){
+                window.socket.emit("pos",{username:userinfo.username,posx:camera.position.x,posy:camera.position.y,posz:camera.position.z,room:window.roomid});
+
+            }
+        }
+        renderer.render( scene, camera );
+
+        stats.update();
+
+        requestAnimationFrame( animate );
+
+    }
+
+
+</script>
+</body>
+</html>

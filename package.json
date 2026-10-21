@@ -1,0 +1,31 @@
+{
+  "name": "petal_dgs",
+  "version": "1.0.0",
+  "description": "轻量级分布式游戏服务框架",
+  "main": "app.js",
+  "scripts": {
+    "test": "node app.js",
+    "run": "node app.js"
+  },
+  "author": "petal",
+  "license": "ISC",
+  "dependencies": {
+    "art-template": "^4.13.2",
+    "body-parser": "^1.20.0",
+    "ejs": "^3.1.7",
+    "express": "^4.18.1",
+    "express-session": "^1.17.2",
+    "html": "^1.0.0",
+    "http-proxy": "^1.18.1",
+    "mysql": "^2.18.1",
+    "orm": "^7.0.0",
+    "orm-mysql-fts": "0.0.1",
+    "redis": "^3.1.2",
+    "socket.io": "^4.5.0",
+    "socket.io-client": "^4.5.0",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "crypto-js": "^4.1.1"
+  }
+}

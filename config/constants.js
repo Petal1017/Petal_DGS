@@ -1,0 +1,54 @@
+const path = require("path");
+module.exports = {
+	AESKEY:"JXU5NkM2JXU1NkUyJXU4RkQwJXU4NDI1JXU2NTcwJXU1QjU3JXU1MzE2JXU1MjA2JXU2NzkwJXU1RTczJXU1M0Yw",
+	ACCESS_CHECK:"PetalDGS666",
+	PROJECTMODE:["development","production"][0],
+	PROXYAUTHKEY:"U4RkQwJXU4NDI1JXU2NTcwJXU1QjU3JXU",
+	UDPTOKENREFRESH:3600000, // ten minutes
+	FILEPATH:{
+		BASEPATH:path.join(__dirname,"../"),
+		SERVER:"/config/servers.json",
+		TOOL:"/public/Tools.js",
+		VIEWPATH:"/client/",
+		MIDDLEMANHANDLER:{
+			HTTPHANDLER:"/servers/middleman/httpHandler.js",
+			IOHANDLER:"/servers/middleman/ioHandler.js",
+			UDPHANDLER:"/servers/middleman/udpHandler.js"
+		},
+		GAMEHANDLER:{
+			HTTPHANDLER:"/servers/game/httpHandler.js",
+			IOHANDLER:"/servers/game/gameHandler.js",
+			UDPHANDLER:"/servers/game/udpHandler.js"
+		}
+	},
+	DATABASESCONF:{
+		MYSQL:{
+			development:{
+				host:"localhost",
+				username:"root",
+				password:"root",
+				db:"petal"
+			},
+			production:{
+				host:"localhost",
+				username:"root",
+				password:"root",
+				db:"petal"
+			}
+		},
+		MIDDLEMAN_REDIS:{
+			host:"106.12.153.142",
+			username:"root",
+			password:"17631705207Xht.",
+			port:6379,
+			db:0
+		},
+		PROXY_REDIS:{
+			host:"106.12.153.142",
+			username:"root",
+			password:"17631705207Xht.",
+			port:6379,
+			db:0
+		}
+	}
+}
